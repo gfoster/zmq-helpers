@@ -1,6 +1,6 @@
 # Zmq::Helpers
 
-TODO: Write a gem description
+A set of utility classes and helper methods for working with ZeroMQ listeners.
 
 ## Installation
 
@@ -18,7 +18,19 @@ Or install it yourself as:
 
 ## Usage
 
-TODO: Write usage instructions here
+This gem helps abstract writing ZeroMQ listeners.  It will allow you
+to easily create small listeners which can be attached to arbitrary
+ZeroMQ buses, receive messages and respond to them.  The main class in
+this gem provides a Zservice class which abstracts a multithreaded
+listener.
+
+Creating a listener service is as easy as instantiating a class,
+defining a few methods, registering them and starting the service.
+This will create a multithreaded listener which will automatically
+respond to incoming messages and dispatch them appropriately in their
+own service threads.
+
+See the files in examples/ for detailed examples.
 
 ## Contributing
 
