@@ -1,11 +1,17 @@
 # Ruby license. Copyright (c) 2003 Gary Foster <gary.foster@gmail.com>
 require 'ffi-rzmq'
 require 'json'
-require 'logging'
+# require 'logging'
 require 'socket'
 require 'time'
 
-include Syslog::Constants
+# include Syslog::Constants
+
+# TODO: remove all begin/rescue and let exceptions happen.
+# Exceptions were originally logged to preserve thread and
+# continue, so they may have to be logged somehow. But we
+# can pull in the logging gem to do this and not make it a
+# feature of Zservice.
 
 module Zmq
   module Helpers
@@ -23,9 +29,9 @@ module Zmq
         @topics = val
       end
 
-      def log_level=(level)
-        @log.level = level
-      end
+      # def log_level=(level)
+      #   @log.level = level
+      # end
 
       def recv_type=(t)
         @recv_type = t.upcase.to_sym
@@ -62,13 +68,14 @@ module Zmq
 
         @context = ZMQ::Context.new(1)
 
-        @log = setup_logging
-        self.log_level = :debug
+        # @log = setup_logging
+        # self.log_level = :debug
       end
 
-      def Zservice.finalize(id)
-        @log.close if @log
-      end
+      # do we still need this method?
+      # def Zservice.finalize(id)
+      #   @log.close if @log
+      # end
 
       def register(code)
         # register a method to be invoked when an arbitrary key in the message
@@ -88,7 +95,8 @@ module Zmq
         begin
           @timer_hooks << [interval, method(code)]
         rescue => e
-          @log.error("Unable to register timer hook for #{interval} secs, exception #{e.message}")
+          puts "Unable to register timer hook for #{interval} secs, exception #{e.message}"
+          # @log.error("Unable to register timer hook for #{interval} secs, exception #{e.message}")
         end
       end
 
@@ -96,7 +104,8 @@ module Zmq
         begin
           @start_hooks.each(&:call)
         rescue => e
-          @log.error("Exception raised in start hook, unable to start: #{e.message}")
+          puts "Exception raised in start hook, unable to start: #{e.message}"
+          # @log.error("Exception raised in start hook, unable to start: #{e.message}")
           raise
         end
 
@@ -111,7 +120,8 @@ module Zmq
               begin
                 action[1].call
               rescue => e
-                @log.error("Exception raised in timer thread: #{e.message}")
+                puts "Exception raised in timer thread: #{e.message}"
+                # @log.error("Exception raised in timer thread: #{e.message}")
               end
             end
           }
@@ -132,13 +142,15 @@ module Zmq
               s.recv_string(msg='')
 
               if msg.strip.empty?
-                @log.debug("ignoring blank message")
+                puts "ignoring blank message"
+                # @log.debug("ignoring blank message")
                 next
               end
 
               # we got a message, so do the minimum we need in order to present it
               Thread.new do
-                @log.debug("spawning new task thread for message: #{msg}")
+                puts "spawning new task thread for message: #{msg}"
+                # @log.debug("spawning new task thread for message: #{msg}")
                 dispatch(msg)
               end # Thread
             end # each
@@ -146,7 +158,8 @@ module Zmq
         end # outer dispatch thread
 
         if args.include?(:blocking)
-          @log.debug("Blocking start requested, joining main thread")
+          puts "Blocking start requested, joining main thread"
+          # @log.debug("Blocking start requested, joining main thread")
           @poll_thread.join
         end
       end
@@ -157,15 +170,18 @@ module Zmq
           begin
             @stop_hooks.each(&:call)
           rescue => e
-            @log.error("stop hook threw exception #{e.message}, skipping it")
+            puts "stop hook threw exception #{e.message}, skipping it"
+            # @log.error("stop hook threw exception #{e.message}, skipping it")
           end
 
           @timer_threads.each do |t|
-            @log.info("Killing timer thread")
+            puts "Killing timer thread"
+            # @log.info("Killing timer thread")
             Thread.kill(t)
           end
 
-          @log.info("Killing main poller thread")
+          puts "Killing main poller thread"
+          # @log.info("Killing main poller thread")
           Thread.kill(@poll_thread)
         end
       end
@@ -194,40 +210,42 @@ module Zmq
 
       private
 
-      def setup_logging
-        unless defined?(@@log)
-          # set up our logger
-          my_name = File.basename($0.chomp(".rb"))
-          my_host = Socket.gethostname
+      # don't need this method
+      # def setup_logging
+      #   unless defined?(@@log)
+      #     # set up our logger
+      #     my_name = File.basename($0.chomp(".rb"))
+      #     my_host = Socket.gethostname
 
-          pattern_hash = {
-            'host'  => my_host,
-            'pid'   => '%p',
-            'sev'   => '%l',
-            'pname' => my_name,
-            'time'  => '%d',
-            'msg'   => '%m',
-          }
+      #     pattern_hash = {
+      #       'host'  => my_host,
+      #       'pid'   => '%p',
+      #       'sev'   => '%l',
+      #       'pname' => my_name,
+      #       'time'  => '%d',
+      #       'msg'   => '%m',
+      #     }
 
-          pattern = "@cee:" + pattern_hash.to_json.gsub('"', '\"')
+      #     pattern = "@cee:" + pattern_hash.to_json.gsub('"', '\"')
 
-          sla = Logging.layouts.pattern(:pattern => pattern)
-          sla.date_method = 'utc.iso8601'
+      #     sla = Logging.layouts.pattern(:pattern => pattern)
+      #     sla.date_method = 'utc.iso8601'
 
-          Logging.appenders.syslog(my_name, :layout => sla)
-          @@log = Logging.logger['syslog']
+      #     Logging.appenders.syslog(my_name, :layout => sla)
+      #     @@log = Logging.logger['syslog']
 
-          @@log.add_appenders(my_name)
-        end
-        return @@log
-      end
+      #     @@log.add_appenders(my_name)
+      #   end
+      #   return @@log
+      # end
 
       def timer_tick
         @timer_hooks.each do |action|
           begin
             action.call
           rescue => e
-            @log.error("Exception #{e.message} raised in timer hook, skipping")
+            puts "Exception #{e.message} raised in timer hook, skipping"
+            # @log.error("Exception #{e.message} raised in timer hook, skipping")
           end
         end
       end
@@ -240,7 +258,8 @@ module Zmq
             begin
               resp = action.call(msg)
             rescue => e
-              @log.error("Handler threw exception #{e.message}, skipping it")
+              puts "Handler threw exception #{e.message}, skipping it"
+              # @log.error("Handler threw exception #{e.message}, skipping it")
             end
             publish_response(resp) if resp
           end
@@ -257,7 +276,8 @@ module Zmq
         begin
           payload = JSON.parse(data)
         rescue JSON::ParserError => e
-          @log.error("Unable to parse mangled json #{data} with exception #{e.message}, skipping")
+          puts "Unable to parse mangled json #{data} with exception #{e.message}, skipping"
+          # @log.error("Unable to parse mangled json #{data} with exception #{e.message}, skipping")
           return
         end
 
@@ -267,7 +287,8 @@ module Zmq
           begin
             resp = action.call(payload)
           rescue => e
-            @log.error("Handler threw exception #{e.message}, skipping it")
+            puts "Handler threw exception #{e.message}, skipping it"
+            # @log.error("Handler threw exception #{e.message}, skipping it")
           end
           publish_response(resp) if resp
         end
@@ -275,15 +296,18 @@ module Zmq
 
       def publish_response(msg)
         if @send_socket.nil?
-          @log.info("action returned response #{msg} but no publish socket was defined and message was dropped")
+          puts "action returned response #{msg} but no publish socket was defined and message was dropped"
+          # @log.info("action returned response #{msg} but no publish socket was defined and message was dropped")
         else
           # send it out the socket here
           # ffi-rzmq doesn't raise exceptions, it uses return values so check to make sure it went out ok
           rc = @send_socket.send_string(msg)
           if rc < 0
-            @log.error("attempt to publish response #{msg} on #{@send_bus} returned error RC #{rc}")
+            puts "attempt to publish response #{msg} on #{@send_bus} returned error RC #{rc}"
+            # @log.error("attempt to publish response #{msg} on #{@send_bus} returned error RC #{rc}")
           elsif rc != msg.length
-            @log.error("attempt to publish response #{msg} on #{@send_bus} sent partial message of #{rc} length")
+            puts "attempt to publish response #{msg} on #{@send_bus} sent partial message of #{rc} length"
+            # @log.error("attempt to publish response #{msg} on #{@send_bus} sent partial message of #{rc} length")
           end
         end
       end
@@ -294,19 +318,22 @@ module Zmq
             sock = @context.socket(ZMQ.const_get(@recv_type))
 
             if sock.send(@recv_mode, s) == 0
-              @log.info("Successful #{@recv_mode} to send socket on #{s}")
+              puts "Successful #{@recv_mode} to send socket on #{s}"
+              # @log.info("Successful #{@recv_mode} to send socket on #{s}")
             else
               raise "request to #{@recv_mode} on #{s} failed"
             end
 
           rescue => e
-            @log.error("Unable to create sub socket #{s}: #{e.message}")
+            puts "Unable to create sub socket #{s}: #{e.message}"
+            # @log.error("Unable to create sub socket #{s}: #{e.message}")
             raise
           end
 
           if @recv_type == :SUB
             @topics.each do |t|
-              @log.info("subscribing socket #{s} to topic #{t}")
+              puts "subscribing socket #{s} to topic #{t}"
+              # @log.info("subscribing socket #{s} to topic #{t}")
               sock.setsockopt(ZMQ::SUBSCRIBE, "#{t}")
             end
           end
@@ -323,12 +350,14 @@ module Zmq
           # rely on response values
 
           if @send_socket.send(@send_mode, @send_bus) == 0
-            @log.info("Successful #{@send_mode} to send socket on #{@send_bus}")
+            puts "Successful #{@send_mode} to send socket on #{@send_bus}"
+            # @log.info("Successful #{@send_mode} to send socket on #{@send_bus}")
           else
             raise "request to #{@send_mode} on #{@send_bus} failed"
           end
         rescue => e
-          @log.error("Unable to create send socket #{@send_socket}: #{e.message}")
+          puts "Unable to create send socket #{@send_socket}: #{e.message}"
+          # @log.error("Unable to create send socket #{@send_socket}: #{e.message}")
           raise
         end
       end
