@@ -114,3 +114,27 @@ describe Zmq::Helpers::Zservice, "#kv_parse" do
   end
 end
 
+describe Zmq::Helpers::Zservice, "#timer_kick" do
+  it "runs the timer hooks" do
+    pending "checking timer hooks"
+  end
+end
+
+describe Zmq::Helpers::Zservice, "#dispatch" do
+  it "handles message without cee cookie" do
+    pending "check message for cee cookie"
+  end
+  it "handles message with cee cookie and parses it" do
+    pending "check message with cee cookie"
+  end
+end
+
+describe Zmq::Helpers::Zservice, "#publish_response" do
+  it "publishes the messages to the socket" do
+    pending "publish message to bus"
+  end
+end
+
+describe Zmq::Helpers::Zservice, "#create_listenters" do
+  it ""
+end
