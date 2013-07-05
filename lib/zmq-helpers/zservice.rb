@@ -271,7 +271,7 @@ module Zmq
         # msg should look like "topic: @cee:{json}"
         # so let's massage that json out of it
 
-        data = msg.split("@cee:")[1].strip
+        data = msg.split("@cee:", 2)[1].strip
 
         begin
           payload = JSON.parse(data)
