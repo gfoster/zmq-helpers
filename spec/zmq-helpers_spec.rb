@@ -126,6 +126,7 @@ describe Zmq::Helpers::Zservice, "#timer_kick" do
   end
 end
 
+# dispatch needs to be tested for handling a cee and non cee message
 describe Zmq::Helpers::Zservice, "#dispatch" do
   it "handles message without cee cookie" do
     pending "check message for cee cookie"
