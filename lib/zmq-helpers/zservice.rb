@@ -167,6 +167,8 @@ module Zmq
 
       private
 
+      # this method may need to be changed or omitted - it doesn't account
+      # for nested array
       def timer_tick
         @timer_hooks.each do |action|
           action.call
