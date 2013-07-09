@@ -33,7 +33,7 @@ module Zmq
       end
 
       def send_type=(t)
-        @send_type = t.upcase_to_sym
+        @send_type = t.upcase.to_sym
       end
 
       def initialize()

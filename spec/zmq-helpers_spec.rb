@@ -41,9 +41,16 @@ end
 describe Zmq::Helpers::Zservice, "#recv_type" do
   it "sets the instance variable @recv_type to uppercase string" do
     service = Zmq::Helpers::Zservice.new
-    service.stub(:recv_type).and_return(:STRING)
     service.recv_type = "string"
     service.recv_type.should eq(:STRING)
+  end
+end
+
+describe Zmq::Helpers::Zservice, "#send_type" do
+  it "sets the instance variable @send_type to uppercase string" do
+    service = Zmq::Helpers::Zservice.new
+    service.send_type = "string"
+    service.send_type.should eq(:STRING)
   end
 end
 
@@ -55,44 +62,44 @@ describe Zmq::Helpers::Zservice, "#recv_bus" do
   end
 end
 
-# this test will fail similar to the test below
+# mock out the method you'll use to pass to register
 describe Zmq::Helpers::Zservice, "#register" do
-  it "adds the specified method to the action hooks array" do
-    pending "properly testing register method"
+  it "adds the specified method to the action hooks array, and method called returns correct value" do
     service = Zmq::Helpers::Zservice.new
+    service.register(:test_method)
+    response = service.instance_variable_get(:@action_hooks)
+    response[0].call.should eq(test_method)
   end
 end
 
 describe Zmq::Helpers::Zservice, "#register_before_start" do
-  it "allows you to add a method to the start hooks array" do
-    # pending "properly passing arg to register_before_start function"
-
+  it "allows you to add a method to the start hooks array and " do
     service = Zmq::Helpers::Zservice.new
-    service.stub(:register_before_start).and_return([:test])
-    # test that the method in zservice is the same as s
-    start_hooks = service.register_before_start("test")
-    start_hooks.should eq([:test])
+    service.register_before_start(:test_method)
+    response = service.instance_variable_get(:@start_hooks)
+    response[0].call.should eq(test_method)
   end
 end
 
 describe Zmq::Helpers::Zservice, "#register_before_stop" do
   it "adds the specified method to the stop hooks array" do
     service = Zmq::Helpers::Zservice.new
-    service = Zmq::Helpers::Zservice.new
-    service.stub(:register_before_stop).and_return([:test])
-    # test that the method in zservice is the same as s
-    start_hooks = service.register_before_stop("test")
-    start_hooks.should eq([:test])
+    service.register_before_stop(:test_method)
+    response = service.instance_variable_get(:@stop_hooks)
+    response[0].call.should eq(test_method)
   end
 end
 
 describe Zmq::Helpers::Zservice, "#register_timer" do
   it "adds a method to the timer hooks aray and specifies a time interval" do
-    # pending "checking correct instance variable"
     service = Zmq::Helpers::Zservice.new
-    service.stub(:register_timer).and_return([60, :test_method])
-    hooks = service.register_timer(60, :test_method)
-    hooks.should eq([60, :test_method])
+    service.register_timer(60, :test_method)
+    response = service.instance_variable_get(:@timer_hooks)
+    response[0][0].should eq(60)
+    response[0][1].call.should eq(test_method)
+    # service.stub(:register_timer).and_return([60, :test_method])
+    # hooks = service.register_timer(60, :test_method)
+    # hooks.should eq([60, :test_method])
   end
 end
 
@@ -108,14 +115,13 @@ describe Zmq::Helpers::Zservice, "#stop" do
   end
 end
 
-# these are all private methods and need to be stubbed
+# these are all private methods
 describe Zmq::Helpers::Zservice, "#kv_parse" do
   it "returns keys and values from a string" do
-    pending "Stub method for proper testing"
+    # pending "Stub method for proper testing"
     message = "a=1,b=2,c=3"
     service = Zmq::Helpers::Zservice.new
-    service.stub(:kv_parse).and_return({"a" => "1", "b" => "2", "c" => "3"})
-    parsed = service.kv_parse(message)
+    parsed = service.send(:kv_parse, message)
     parsed.should eq({"a" => "1", "b" => "2", "c" => "3"})
   end
 end
