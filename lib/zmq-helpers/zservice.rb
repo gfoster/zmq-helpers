@@ -167,14 +167,6 @@ module Zmq
 
       private
 
-      # this method may need to be changed or omitted - it doesn't account
-      # for nested array
-      def timer_tick
-        @timer_hooks.each do |action|
-          action.call
-        end
-      end
-
       def dispatch(msg)
         if not msg.include?("@cee:")
           # ok, the message doesn't include a @cee cookie so we pass it through untouched
@@ -194,7 +186,8 @@ module Zmq
         data = msg.split("@cee:", 2)[1].strip
 
         # we now have it all parsed out, pass just the json (converted to a hash) to the method
-
+        payload = JSON.parse(data)
+         
         @action_hooks.each do |action|
           resp = action.call(payload)
           publish_response(resp) if resp

@@ -96,8 +96,12 @@ describe Zmq::Helpers::Zservice, "#register_timer" do
 end
 
 describe Zmq::Helpers::Zservice, "#start" do
-  it "starts a thread and calls start hooks" do
+  it "without a publisher, it creates listeners, calls start hooks methods, and starts new thread" do
     pending "checking the thread and start hooks"
+    service = Zmq::Helpers::Zservice.new
+    service.register_before_start(:test_method)
+
+    # poll thread is initially set to nil; check not nil
     # Test for the following:
     # start hook methods called
     # create_listeners called (test this function)
@@ -113,6 +117,7 @@ describe Zmq::Helpers::Zservice, "#stop" do
   end
 
   it "will not kill thread if one does not exist" do
+    pending "check method with no thread"
   end
 end
 
@@ -127,18 +132,18 @@ describe Zmq::Helpers::Zservice, "#kv_parse" do
   end
 end
 
-# this method may need to be changed or omitted - it doesn't account
-# for nested array
-describe Zmq::Helpers::Zservice, "#timer_tick" do
-  it "runs the timer hooks" do
-    pending "this example fails, fix in code"
-    service = Zmq::Helpers::Zservice.new
-    service.register_timer(60, :test_method)
-    response = service.instance_variable_get(:@timer_hooks)
-    service.send(:timer_tick).should eq(response[0][1].call)
-    # pending "checking timer hooks"
-  end
-end
+# removed this method since the correct method is in there and working
+# describe Zmq::Helpers::Zservice, "#timer_tick" do
+#   it "runs the timer hooks" do
+#     # pending "this example fails, fix in code"
+#     service = Zmq::Helpers::Zservice.new
+#     service.register_timer(60, :test_method)
+#     response = service.instance_variable_get(:@timer_hooks)
+#     service.send(:timer_tick).should eq(response[0][1].call)
+#     # pending "checking timer hooks"
+#   end
+# end
+
 cee_message = '@cee: {"host":"mcoyle1.rgops.com","pname":"irb","time":"2013-07-09 18:14:46 UTC","sev":6,"msg":"test"}'
 reg_message = '"GET /events?rg_type=2.4.5:info&rg_player_type=standard&rg_publisher=gossipcenter&rg_publisher_id=1228&rg_domain_category_id=&rg_domain_id=9439103338f821227104719fde61bf12&rg_page_host_url=http%3A%2F%2Fgossipcenter.com%2Fjennifer-lopez%2Fvideo%2Fjlo-under-fire-human-rights-group&rg_ad_domain_id=undefined&rg_player_uuid=e8a48200-53b1-42ee-9fd0-4bd701f060c1&rg_video_catalog_id=621&rg_video_index_id=34&rg_guid=76fc5295-a1f8-4f29-8e29-d8b72f08a958&rg_session=a1a9a9d4a7cf4818d00e8563862f0d86&rg_counter=0&rg_event=jwplayerPlaylistItem&rg_iframe=false&rg_referrer=http%3A%2F%2Fgossipcenter.com%2Felton-john%2Felton-john-postpones-summer-tour-due-appendicitis-885671&rg_settings=Mute:%20false%20Volume:%2020%20Autostart:%20false&rg_documenthidden=false&rg_lable=http://videos.realgravity.com/1073/content/281596/1187960-76fc5295-a1f8-4f29-8e29-d8b72f08a958.mp4&rg_category=Playlist%20Pick HTTP/1.1" 200 0 "-" "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/27.0.1453.116 Safari/537.36"'
 
@@ -147,15 +152,15 @@ describe Zmq::Helpers::Zservice, "#dispatch" do
   it "handles message without cee cookie" do
     # pending "check message for cee cookie"
     service = Zmq::Helpers::Zservice.new
-    service.register(:test_method)
-    service.send(:dispatch, cee_message)
-    # payload vs data - how to test?
+    # service.register(:test_method)
+    res = service.send(:dispatch, reg_message)
+    # res.should eq() # not sure what dispatch returns here or what we'd test for - resp? message sent?
   end
 
   it "handles message with cee cookie and parses it" do
     service = Zmq::Helpers::Zservice.new
-    service.register(:test_method)
-    service.send(:dispatch, reg_message)
+    # service.register(:test_method)
+    service.send(:dispatch, cee_message)
     # pending "check message with cee cookie"
   end
 
@@ -167,8 +172,26 @@ describe Zmq::Helpers::Zservice, "#publish_response" do
   end
 end
 
-describe Zmq::Helpers::Zservice, "#create_listenters" do
-  it "creates socket listeners" do
+describe Zmq::Helpers::Zservice, "#create_listeners" do
+  it "creates socket listeners, defaults to :SUB" do
+    pending "mock out ZMQ lib"
+    service = Zmq::Helpers::Zservice.new
+    service.send(:create_listeners)
+    service.recv_sockets.length.should eq(1)
+    service.recv_sockets[0].should eq("test")
+  end
+
+  it "raises error if return value is not zero" do
+    service = Zmq::Helpers::Zservice.new
+
+    # mock out socket to reply with non zero value
+    # 
+  end
+
+  it "creates a subscribe socket if type is :SUB" do
+    service = Zmq::Helpers::Zservice.new
+    service.recv_type = "sub"
+    service.topics = "test"
   end
 end
 
