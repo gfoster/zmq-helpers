@@ -3,7 +3,6 @@ require 'ffi-rzmq'
 require 'json'
 require 'socket'
 require 'time'
-require 'debugger'
 
 # include Syslog::Constants
 
@@ -169,7 +168,6 @@ module Zmq
       private
 
       def dispatch(msg)
-        # debugger;1
         if not msg.include?("@cee:")
           # ok, the message doesn't include a @cee cookie so we pass it through untouched
           # to our handlers and let them deal with it
@@ -197,7 +195,6 @@ module Zmq
       end
 
       def publish_response(msg)
-        # debugger;1
         if not @send_socket.nil?
           # send it out the socket here
           # ffi-rzmq doesn't raise exceptions, it uses return values so check to make sure it went out ok
