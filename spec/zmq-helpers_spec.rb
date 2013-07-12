@@ -98,6 +98,7 @@ describe Zmq::Helpers::Zservice, "#register_timer" do
   end
 end
 
+# how do I tell zservice to use the mock poller?
 describe Zmq::Helpers::Zservice, "#start" do
   it "creates listeners, calls start hooks methods, and starts new thread" do
     poller = MiniTest::Mock.new
@@ -174,12 +175,12 @@ describe Zmq::Helpers::Zservice, "#dispatch" do
     res.should be nil
     # pending "check message with cee cookie"
   end
-
 end
 
 # created the mock, but doesn't seem to be used in the test?
 describe Zmq::Helpers::Zservice, "#publish_response" do
   it "publishes the messages to the socket if the socket exists" do
+    pending "test with the mock"
     @send_socket = MiniTest::Mock.new
     @send_socket.expect(:new, Object)
     @send_socket.expect(:send_string, 0, ["msg"])
@@ -231,15 +232,14 @@ end
 describe Zmq::Helpers::Zservice, "#create_publisher" do
   it "creates the socket to publish messages" do
     # pending "mock out zmq and socket lib"
-    @context = MiniTest::Mock.new
-    @context.expect(:new, true, 1)
-    @context.expect(:socket, true, nil)
+    context = MiniTest::Mock.new
+    context.expect(:new, true, 1)
+    context.expect(:socket, true, :PUB)
     service = Zmq::Helpers::Zservice.new
     service.send_bus = "tcp://localhost:12345"
+    service.instance_variable_set(:@context, context)
     service.send(:create_publisher)
-    # send_type is :PUB
-    # send_bus is: 
 
-    service.instance_variable_get(:@send_socket).should be_an_instance_of(ZMQ::Socket)
+    # service.instance_variable_get(:@send_socket).should be_an_instance_of(ZMQ::Socket)
   end
 end
