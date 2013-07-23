@@ -9,3 +9,7 @@ end
 def test_msg(msg)
   return msg
 end
+
+def test_exception
+  # raise exception
+end
