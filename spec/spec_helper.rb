@@ -1,6 +1,7 @@
 load 'lib/zmq-helpers.rb'
 require 'ffi-rzmq'
 require 'minitest/mock'
+require 'debugger'
 
 def test_method
   return "in test"
@@ -11,5 +12,5 @@ def test_msg(msg)
 end
 
 def test_exception
-  # raise exception
+  raise "exception test"
 end

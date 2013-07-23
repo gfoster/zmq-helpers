@@ -3,7 +3,7 @@ require 'ffi-rzmq'
 require 'json'
 require 'socket'
 require 'time'
-
+require 'debugger'
 # include Syslog::Constants
 
 # TODO: remove all begin/rescue and let exceptions happen.
@@ -62,7 +62,6 @@ module Zmq
         @send_type = :PUB
 
         @context = ZMQ::Context.new(1)
-
       end
 
       def register(code)
@@ -90,11 +89,15 @@ module Zmq
         create_publisher if @send_bus
 
         # spin up our timer threads if we need to
-
+        # raise exception for errors, but swallow the exception (will allow us to continue main thread)
         @timer_hooks.each do |action|
           @timer_threads << Thread.new {
             Timer.every(action[0]) do
-              action[1].call
+              begin
+                action[1].call
+              rescue => each
+                next
+              end
             end
           }
         end
@@ -134,11 +137,9 @@ module Zmq
         if @poll_thread && @poll_thread.alive?
           # we have been started, so let's make sure we run our shutdown hooks first
           @stop_hooks.each(&:call)
-
           @timer_threads.each do |t|
             Thread.kill(t)
           end
-
           Thread.kill(@poll_thread)
         end
       end
@@ -172,7 +173,11 @@ module Zmq
           # ok, the message doesn't include a @cee cookie so we pass it through untouched
           # to our handlers and let them deal with it
           @action_hooks.each do |action|
-            resp = action.call(msg)
+            begin
+              resp = action.call(msg)
+            rescue => e
+              next
+            end
             publish_response(resp) if resp
           end
           return
@@ -189,7 +194,11 @@ module Zmq
         payload = JSON.parse(data)
          
         @action_hooks.each do |action|
-          resp = action.call(payload)
+          begin
+            resp = action.call(payload)
+          rescue => e
+            next
+          end
           publish_response(resp) if resp
         end
       end
