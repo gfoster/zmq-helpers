@@ -12,7 +12,7 @@ module Zmq
     class Zservice
       attr_accessor :recv_mode, :recv_bus, :recv_sockets
       attr_accessor :send_mode, :send_bus, :send_socket
-      attr_accessor :recv_bus,  :send_bus, :interval
+      attr_accessor :interval
 
       attr_reader :recv_type, :send_type
 
